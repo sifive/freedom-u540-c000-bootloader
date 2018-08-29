@@ -57,6 +57,7 @@ volatile uint64_t dtb_target;
 unsigned int serial_to_burn = ~0;
 
 uint32_t __attribute__((weak)) own_dtb = 42; // not 0xedfe0dd0 the DTB magic
+extern uint32_t microsemi_dtb; // hacky DTB for Microsemi
 
 static const uintptr_t i2c_devices[] = {
   I2C_CTRL_ADDR,
@@ -317,11 +318,17 @@ int main(int id, unsigned long dtb)
   // If chiplink is connected and has a DTB, use that DTB instead of what we have
   // compiled-in. This will be replaced with a real bootloader with overlays in
   // the future
+  // Similarly, if a microsemi board without DTB is connected, use the special
+  // Microsemi PCIe DTB included in the FSBL.
   uint32_t *chiplink_dtb = (uint32_t*)0x2ff0000000UL;
-  if (*chiplink_dtb == 0xedfe0dd0){
+  uint32_t *microsemi_ecam = (uint32_t*)0x2000000000UL;
+  if (*chiplink_dtb == 0xedfe0dd0) {
 	dtb = (uintptr_t)chiplink_dtb;
 	puts("\r\nUsing Chiplink DTB");
-  } else if (own_dtb == 0xedfe0dd0){
+  } else if (*microsemi_ecam == 0x15062901) {
+	dtb = (uintptr_t)&microsemi_dtb;
+	puts("\r\nUsing MicroSemi FSBL DTB");
+  } else if (own_dtb == 0xedfe0dd0) {
 	dtb = (uintptr_t)&own_dtb;
 	puts("\r\nUsing FSBL DTB");
   }
