@@ -1,0 +1,8 @@
+*.elf
+*.swp
+*.swo
+*/*.o
+*.dtb
+*.bin
+*.asm
+lib/version.c
