@@ -53,8 +53,8 @@ static inline uint64_t ccache_stride(uint64_t base_addr) {
 }
 
 // Block memory access until operation completed
-static inline void ccache_barrier_0(void) { asm volatile("fence rw, io" : : : "memory" ); }
-static inline void ccache_barrier_1(void) { asm volatile("fence io, rw" : : : "memory" ); }
+static inline void ccache_barrier_0() { asm volatile("fence rw, io" : : : "memory" ); }
+static inline void ccache_barrier_1() { asm volatile("fence io, rw" : : : "memory" ); }
 
 // flush64 takes a byte-aligned address, while flush32 takes an address right-shifted by 4
 static inline void ccache_flush64(uint64_t base_addr, uint64_t flush_addr) {
