@@ -16,7 +16,7 @@
 // https://stackoverflow.com/a/23699777/7433423
 
 
-inline uint64_t clkutils_read_mtime() {
+inline uint64_t clkutils_read_mtime(void) {
 #if __riscv_xlen == 32
   uint32_t mtime_hi_0;
   uint32_t mtime_lo;
@@ -33,7 +33,7 @@ inline uint64_t clkutils_read_mtime() {
 #endif
 }
 
-inline static uint64_t clkutils_read_mcycle() {
+inline static uint64_t clkutils_read_mcycle(void) {
 #if __riscv_xlen == 32
   uint32_t mcycle_hi_0;
   uint32_t mcycle_lo;
