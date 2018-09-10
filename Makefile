@@ -17,8 +17,7 @@ PAGER ?= less
 # clkutils.o is there to match original zsbl, may not be needed
 LIB_ZS1_O=\
 	spi/spi.o \
-	uart/uart.o \
-	lib/version.o
+	uart/uart.o
 
 LIB_ZS2_O=\
 	clkutils/clkutils.o \
@@ -30,6 +29,7 @@ LIB_FS_O= \
 	fsbl/start.o \
 	fsbl/main.o \
 	$(LIB_ZS1_O) \
+	lib/version.o \
 	ememoryotp/ememoryotp.o \
 	fsbl/ux00boot.o \
 	clkutils/clkutils.o \
