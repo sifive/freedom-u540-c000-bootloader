@@ -15,6 +15,7 @@ _start:
 
   smp_pause(s1, s2)
 
+#define SKIP_ECC_WIPEDOWN
 #ifndef SKIP_ECC_WIPEDOWN
   // Clean the LIM of ECC errors using DMA
   li t0, DMA_CTRL_ADDR + 0x80000 // channel 0
@@ -43,7 +44,7 @@ _start:
   la t1, _data
   beq t0, t1, 2f
   la t2, _edata
-  bgeu t1, t2, 2f
+  bleu t2, t1, 2f
 1:
   LOAD t3, 0(t0)
   STORE t3, 0(t1)
@@ -56,7 +57,7 @@ _start:
 #ifdef SKIP_ECC_WIPEDOWN
   la t0, _fbss
   la t1, _ebss
-  bgeu t0, t1, 2f
+  bleu t1, t0, 2f
 1:
   STORE zero, 0(t0)
   addi t0, t0, REGBYTES
@@ -72,7 +73,10 @@ _start:
   la sp, _sp
   sub sp, sp, t0
 
+.option push
+.option norelax
   call main
+.option pop
 
   li t0, CCACHE_SIDEBAND_ADDR
   csrr a0, mhartid
