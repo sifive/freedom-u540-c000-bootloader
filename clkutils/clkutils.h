@@ -60,7 +60,7 @@ inline static uint64_t clkutils_read_mcycle() {
 // at all. So this function delays AT LEAST delay_ns.
 inline void clkutils_delay_ns(int delay_ns) {
   uint64_t now = clkutils_read_mtime();
-  uint64_t then = now + delay_ns / RTC_PERIOD_NS + 1;
+  uint64_t then = now + delay_ns / RTC_PERIOD_NS;
 
   do {
     now = clkutils_read_mtime();
