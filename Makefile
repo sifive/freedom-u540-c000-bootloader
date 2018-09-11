@@ -91,7 +91,7 @@ fsbl.elf: $(LIB_FS_O) ux00_fsbl.lds
 
 fsbl/dtb.o: fsbl/ux00_fsbl.dtb
 
-zsbl/start.o: u540-c000-release/bootrom.bin.dtb
+zsbl/start.o: zsbl/ux00_zsbl.dtb
 
 u540-c000-release/bootrom.bin.text: $(MAKEFILE_LIST)
 	dd if=u540-c000-release/bootrom.bin of=$@ bs=3526 count=1
@@ -167,7 +167,7 @@ u540-c000-release/bootrom.bin.elf: u540-c000-release/bootrom.bin.text u540-c000-
 	$(OBJDUMP) -S $^ > $@
 
 %.dtb: %.dts
-	dtc $^ -o $@ -O dtb
+	dtc $^ -o $@ -O dtb -H both
 
 %.o: %.S
 	$(CC) $(CFLAGS) $(CCASFLAGS) -c $< -o $@
