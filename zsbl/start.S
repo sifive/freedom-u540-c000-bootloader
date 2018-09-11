@@ -85,6 +85,7 @@ trap_entry:
 
   .section .rodata
 _dtb:
-  .incbin "zsbl/ux00_zsbl.dtb"
+  .incbin "u540-c000-release/bootrom.bin.dtb"
+  //.incbin "zsbl/ux00_zsbl.dtb"
   //.incbin DEVICE_TREE
 

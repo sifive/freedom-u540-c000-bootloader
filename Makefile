@@ -85,7 +85,7 @@ fsbl.elf: $(LIB_FS_O) ux00_fsbl.lds
 
 fsbl/dtb.o: fsbl/ux00_fsbl.dtb
 
-zsbl/start.o: zsbl/ux00_zsbl.dtb
+zsbl/start.o: u540-c000-release/bootrom.bin.dtb
 
 u540-c000-release/bootrom.bin.text: $(MAKEFILE_LIST)
 	dd if=u540-c000-release/bootrom.bin of=$@ bs=3526 count=1
@@ -95,6 +95,12 @@ u540-c000-release/bootrom.bin.rodata: $(MAKEFILE_LIST)
 
 u540-c000-release/bootrom.bin.bss: $(MAKEFILE_LIST)
 	dd if=/dev/zero of=$@ bs=24 count=1
+
+u540-c000-release/bootrom.bin.dtb: u540-c000-release/bootrom.bin.rodata $(MAKEFILE_LIST)
+	dd if=u540-c000-release/bootrom.bin.rodata of=$@ bs=8652 count=1
+
+u540-c000-release/bootrom.bin.dts: u540-c000-release/bootrom.bin.dtb
+	dtc -I dtb -O dts -o $@ $<
 
 u540-c000-release/bootrom.bin.elf: u540-c000-release/bootrom.bin.text u540-c000-release/bootrom.bin.rodata u540-c000-release/bootrom.bin.bss
 	$(OBJCOPY) \
