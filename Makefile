@@ -45,7 +45,7 @@ LIB_FS_O= \
 
 H=$(wildcard *.h */*.h)
 
-.PHONY: dump odump dis odis
+.PHONY: dump odump dis odis data odata
 
 all: zsbl.bin fsbl.bin
 
@@ -64,6 +64,12 @@ dis: zsbl.elf
 
 odis: u540-c000-release/bootrom.bin.elf
 	$(OBJDUMP) -d $^ | $(PAGER)
+
+data: zsbl.bin
+	xxd -o 0x10000 -s 12184 $<
+
+odata:
+	xxd -o 0x10000 -s 12184 u540-c000-release/bootrom.bin
 
 lib/version.c: .git/HEAD .git/index
 	echo "const char *gitid = \"$(shell git describe --always --dirty)\";" > lib/version.c
