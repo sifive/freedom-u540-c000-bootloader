@@ -1,0 +1,50 @@
+--- zsbl/main.o.s	2018-09-13 14:59:25.152816720 -0600
++++ zsbl/main.o.s.2	2018-09-13 15:19:52.013338362 -0600
+@@ -153,26 +153,26 @@
+ .LBB34:
+ 	.file 3 "./sifive/barrier.h"
+ 	.loc 3 27 0
+-	.LA2: auipc	a5,%pcrel_hi(.LANCHOR0)
+-	addi	a5,a5,%pcrel_lo(.LA2)
++	.LA2: auipc	a2,%pcrel_hi(.LANCHOR0)
++	addi	a2,a2,%pcrel_lo(.LA2)
+ 	fence	iorw,iorw
+-	lw	a2,16(a5)
++	lw	a5,16(a2)
+ 	.loc 3 29 0
+ 	li	a0,1
+ 	.loc 3 27 0
+ 	fence	iorw,iorw
+-	sext.w	a2,a2
++	sext.w	a5,a5
+ .LVL11:
+-	sll	a4,a2,2
++	sll	a4,a5,2
+ 	.loc 3 29 0
+-	add	a3,a5,a4
++	add	a3,a2,a4
+ 	fence iorw,ow; amoadd.w.aq a1,a0,0(a3)
+ 	add	a4,a4,8
+ 	sext.w	a1,a1
+ .LVL12:
+ 	.loc 3 32 0
+ 	li	a6,4
+-	add	a4,a5,a4
++	add	a4,a2,a4
+ 	beq	a1,a6,.L19
+ .L10:
+ 	.loc 3 41 0
+@@ -218,10 +218,10 @@
+ .LVL16:
+ .L19:
+ 	.loc 3 34 0
+-	subw	a2,a0,a2
++	subw	a5,a0,a5
+ .LVL17:
+-	add	a5,a5,16
+-	fence iorw,ow; amoswap.w.aq zero,a2,0(a5)
++	add	a2,a2,16
++	fence iorw,ow; amoswap.w.aq zero,a5,0(a2)
+ 	.loc 3 36 0
+ 	li	a5,-1
+ 	fence iorw,ow; amoadd.w.aq zero,a5,0(a3)

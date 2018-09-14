@@ -63,15 +63,16 @@ small:
 	  long b6 = *lb++;
 	  long b7 = *lb++;
 	  long b8 = *lb++;
-	  *la++ = b0;
-	  *la++ = b1;
-	  *la++ = b2;
-	  *la++ = b3;
-	  *la++ = b4;
-	  *la++ = b5;
-	  *la++ = b6;
-	  *la++ = b7;
-	  *la++ = b8;
+	  la += 9;
+	  la[-9] = b0;
+	  la[-8] = b1;
+	  la[-7] = b2;
+	  la[-6] = b3;
+	  la[-5] = b4;
+	  la[-4] = b5;
+	  la[-3] = b6;
+	  la[-2] = b7;
+	  la[-1] = b8;
 	}
     }
 
