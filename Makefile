@@ -22,7 +22,7 @@ LIB_ZS1_O=\
 LIB_ZS2_O=\
 	clkutils/clkutils.o \
 	gpt/gpt.o \
-	zsbl/memcpy.o \
+	lib/memcpy.o \
 	sd/sd.o \
 
 LIB_FS_O= \

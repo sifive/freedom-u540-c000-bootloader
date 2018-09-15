@@ -209,6 +209,61 @@ static ux00boot_routine get_boot_routine(uint32_t mode_select)
 // SPI flash
 //------------------------------------------------------------------------------
 
+/**
+ * Set up SPI for direct, non-memory-mapped access.
+ */
+static inline int initialize_spi_flash_direct(spi_ctrl* spictrl, unsigned int spi_clk_input_khz)
+{
+  // Max desired SPI clock is 10MHz
+  spictrl->sckdiv = spi_min_clk_divisor(spi_clk_input_khz, 10000);
+
+  spictrl->fctrl.en = 0;
+
+  spi_txrx(spictrl, MICRON_SPI_FLASH_CMD_RESET_ENABLE);
+  spi_txrx(spictrl, MICRON_SPI_FLASH_CMD_MEMORY_RESET);
+
+  return 0;
+}
+
+
+static inline int _initialize_spi_flash_mmap(spi_ctrl* spictrl, unsigned int spi_clk_input_khz, unsigned int pad_cnt, unsigned int data_proto, unsigned int command_code)
+{
+  // Max desired SPI clock is 10MHz
+  spictrl->sckdiv = spi_min_clk_divisor(spi_clk_input_khz, 10000);
+
+  spictrl->fctrl.en = 0;
+
+  spi_txrx(spictrl, MICRON_SPI_FLASH_CMD_RESET_ENABLE);
+  spi_txrx(spictrl, MICRON_SPI_FLASH_CMD_MEMORY_RESET);
+
+  spictrl->ffmt.raw_bits = ((spi_reg_ffmt) {
+    .cmd_en = 1,
+    .addr_len = 3,
+    .pad_cnt = pad_cnt,
+    .command_proto = SPI_PROTO_S,
+    .addr_proto = SPI_PROTO_S,
+    .data_proto = data_proto,
+    .command_code = command_code,
+  }).raw_bits;
+
+  spictrl->fctrl.en = 1;
+  __asm__ __volatile__ ("fence io, io");
+  return 0;
+}
+
+
+static int initialize_spi_flash_mmap_single(spi_ctrl* spictrl, unsigned int spi_clk_input_khz)
+{
+  return _initialize_spi_flash_mmap(spictrl, spi_clk_input_khz, 0, SPI_PROTO_S, MICRON_SPI_FLASH_CMD_READ);
+}
+
+
+static int initialize_spi_flash_mmap_quad(spi_ctrl* spictrl, unsigned int spi_clk_input_khz)
+{
+  return _initialize_spi_flash_mmap(spictrl, spi_clk_input_khz, 8, SPI_PROTO_Q, MICRON_SPI_FLASH_CMD_QUAD_FAST_READ);
+}
+
+
 //------------------------------------------------------------------------------
 // SPI flash non-memory-mapped
 
@@ -352,60 +407,6 @@ int load_spiflash_gpt_partition(spi_ctrl* spictrl, void* dst, const gpt_guid* pa
   );
   __builtin_unreachable();
 #endif
-}
-
-/**
- * Set up SPI for direct, non-memory-mapped access.
- */
-static inline int initialize_spi_flash_direct(spi_ctrl* spictrl, unsigned int spi_clk_input_khz)
-{
-  // Max desired SPI clock is 10MHz
-  spictrl->sckdiv = spi_min_clk_divisor(spi_clk_input_khz, 10000);
-
-  spictrl->fctrl.en = 0;
-
-  spi_txrx(spictrl, MICRON_SPI_FLASH_CMD_RESET_ENABLE);
-  spi_txrx(spictrl, MICRON_SPI_FLASH_CMD_MEMORY_RESET);
-
-  return 0;
-}
-
-
-static inline int _initialize_spi_flash_mmap(spi_ctrl* spictrl, unsigned int spi_clk_input_khz, unsigned int pad_cnt, unsigned int data_proto, unsigned int command_code)
-{
-  // Max desired SPI clock is 10MHz
-  spictrl->sckdiv = spi_min_clk_divisor(spi_clk_input_khz, 10000);
-
-  spictrl->fctrl.en = 0;
-
-  spi_txrx(spictrl, MICRON_SPI_FLASH_CMD_RESET_ENABLE);
-  spi_txrx(spictrl, MICRON_SPI_FLASH_CMD_MEMORY_RESET);
-
-  spictrl->ffmt.raw_bits = ((spi_reg_ffmt) {
-    .cmd_en = 1,
-    .addr_len = 3,
-    .pad_cnt = pad_cnt,
-    .command_proto = SPI_PROTO_S,
-    .addr_proto = SPI_PROTO_S,
-    .data_proto = data_proto,
-    .command_code = command_code,
-  }).raw_bits;
-
-  spictrl->fctrl.en = 1;
-  __asm__ __volatile__ ("fence io, io");
-  return 0;
-}
-
-
-static int initialize_spi_flash_mmap_single(spi_ctrl* spictrl, unsigned int spi_clk_input_khz)
-{
-  return _initialize_spi_flash_mmap(spictrl, spi_clk_input_khz, 0, SPI_PROTO_S, MICRON_SPI_FLASH_CMD_READ);
-}
-
-
-static int initialize_spi_flash_mmap_quad(spi_ctrl* spictrl, unsigned int spi_clk_input_khz)
-{
-  return _initialize_spi_flash_mmap(spictrl, spi_clk_input_khz, 8, SPI_PROTO_Q, MICRON_SPI_FLASH_CMD_QUAD_FAST_READ);
 }
 
 

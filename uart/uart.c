@@ -45,7 +45,7 @@ void uart_put_hex(void* uartctrl, uint32_t hex) {
   int num_nibbles = sizeof(hex) * 2;
   for (int nibble_idx = num_nibbles - 1; nibble_idx >= 0; nibble_idx--) {
     char nibble = (hex >> (nibble_idx * 4)) & 0xf;
-    uart_putc(uartctrl, (nibble < 0xa) ? ('0' + nibble) : ('a' + nibble - 0xa));
+    uart_putc(uartctrl, (nibble < 0xa) ? ('0' + nibble) : ('a' + nibble /* - 0xa */));
   }
 #else
   __asm__ __volatile__ (
