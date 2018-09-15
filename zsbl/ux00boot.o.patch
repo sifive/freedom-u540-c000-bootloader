@@ -1,6 +1,6 @@
 --- zsbl/ux00boot.o.s	2018-09-13 20:04:18.923606723 -0600
 +++ zsbl/ux00boot.o.s.2	2018-09-13 20:04:44.275278088 -0600
-@@ -801,16 +801,15 @@
+@@ -638,16 +638,15 @@
  	or	a5,a0,a4
  .LVL83:
  .L45:
@@ -8,8 +8,8 @@
 +	slli	s0,a1,56
 +	li	a0,268500992
  .LVL84:
- 	.loc 2 491 0
- 	.LA0: auipc	a1,%pcrel_hi(.LC0)
+ 	.loc 2 492 0
+ 	.LA0: auipc	a1,%pcrel_hi(errorStr.2406)
  .LVL85:
  	addi	a1,a1,%pcrel_lo(.LA0)
 -	li	a0,268500992
