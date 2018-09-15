@@ -842,27 +842,50 @@ void ux00boot_load_gpt_partition(void* dst, const gpt_guid* partition_type_guid,
     ux00boot_fail(error, 0);
   }
 #else
-  static const uint8_t data1[40] __attribute__((section(".rodata.1"))) = {
-    0x52,0xd8,0xff,0xff, 0x52,0xd8,0xff,0xff, 0x56,0xd8,0xff,0xff, 0xbe,0xd8,0xff,0xff,
-    0x52,0xd8,0xff,0xff, 0x56,0xd8,0xff,0xff, 0xbe,0xd8,0xff,0xff, 0x52,0xd8,0xff,0xff,
-    0xbe,0xd8,0xff,0xff, 0x52,0xd8,0xff,0xff,
-  };
-  static const uint8_t data2[40] __attribute__((section(".rodata.2"))) = {
-    0x6e,0xd7,0xff,0xff, 0x6e,0xd7,0xff,0xff,
-    0xc2,0xd7,0xff,0xff, 0x9c,0xd8,0xff,0xff, 0x6e,0xd7,0xff,0xff, 0xc2,0xd7,0xff,0xff,
-    0x9c,0xd8,0xff,0xff, 0x6e,0xd7,0xff,0xff, 0x9c,0xd8,0xff,0xff, 0x6e,0xd7,0xff,0xff,
-  };
-  static const uint8_t data3[40] __attribute__((section(".rodata.3"))) = {
-    0xea,0xd7,0xff,0xff, 0xea,0xd7,0xff,0xff, 0xf2,0xd7,0xff,0xff, 0x1e,0xd8,0xff,0xff,
-    0xea,0xd7,0xff,0xff, 0xf2,0xd7,0xff,0xff, 0x1e,0xd8,0xff,0xff, 0xea,0xd7,0xff,0xff,
-    0x1e,0xd8,0xff,0xff, 0xea,0xd7,0xff,0xff,
-  };
-  static const uint8_t data4[24] __attribute__((section(".rodata.4"))) = {
-    0x05,0x00,0x00,0x00, 0x06,0x00,0x00,0x00,
-    0x07,0x00,0x00,0x00, 0x08,0x00,0x00,0x00, 0x09,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
+  static const uint32_t data[6] = {
+    5, 6, 7, 8, 9, 0,
   };
 
   __asm__ __volatile__ (
+                 ".section .rodata\n"
+                 ".align 2\n"
+                 "jumptableA:\n"
+                 ".type jumptableA, %%object\n"
+                 ".word .LA_1 - jumptableA\n"
+                 ".word .LA_1 - jumptableA\n"
+                 ".word .LA_2 - jumptableA\n"
+                 ".word .LA_3 - jumptableA\n"
+                 ".word .LA_1 - jumptableA\n"
+                 ".word .LA_2 - jumptableA\n"
+                 ".word .LA_3 - jumptableA\n"
+                 ".word .LA_1 - jumptableA\n"
+                 ".word .LA_3 - jumptableA\n"
+                 ".word .LA_1 - jumptableA\n"
+                 "jumptableB:\n"
+                 ".type jumptableB, %%object\n"
+                 ".word .LB_1 - jumptableB\n"
+                 ".word .LB_1 - jumptableB\n"
+                 ".word .LB_2 - jumptableB\n"
+                 ".word .LB_3 - jumptableB\n"
+                 ".word .LB_1 - jumptableB\n"
+                 ".word .LB_2 - jumptableB\n"
+                 ".word .LB_3 - jumptableB\n"
+                 ".word .LB_1 - jumptableB\n"
+                 ".word .LB_3 - jumptableB\n"
+                 ".word .LB_1 - jumptableB\n"
+                 "jumptableC:\n"
+                 ".type jumptableC, %%object\n"
+                 ".word .LC_1 - jumptableC\n"
+                 ".word .LC_1 - jumptableC\n"
+                 ".word .LC_2 - jumptableC\n"
+                 ".word .LC_3 - jumptableC\n"
+                 ".word .LC_1 - jumptableC\n"
+                 ".word .LC_2 - jumptableC\n"
+                 ".word .LC_3 - jumptableC\n"
+                 ".word .LC_1 - jumptableC\n"
+                 ".word .LC_3 - jumptableC\n"
+                 ".word .LC_1 - jumptableC\n"
+                 ".previous\n"
     /* 10600: */ "lui     a5,0x1\n"
     /* 10602: */ "lw      a5,0(a5)\n"
     /* 10604: */ "addi    sp,sp,-48\n"
@@ -900,7 +923,7 @@ void ux00boot_load_gpt_partition(void* dst, const gpt_guid* partition_type_guid,
     /* 1064e: */ "bltu    a4,a3,19f\n" /* 107e0 <ux00boot_load_gpt_partition+0x1e0> */
     /* 10652: */ "slli    a5,a5,0x20\n"
     /* 10654: */ "srli    a5,a5,0x20\n"
-    /* 10656: */ "la      a4,%0\n"
+    /* 10656: */ "la      a4,jumptableA\n"
     /* 1065e: */ "slli    a5,a5,0x2\n"
     /* 10660: */ "add     a5,a5,a4\n"
     /* 10662: */ "lw      a5,0(a5)\n"
@@ -913,7 +936,7 @@ void ux00boot_load_gpt_partition(void* dst, const gpt_guid* partition_type_guid,
     /* 10670: */ "bltu    a4,a3,5f\n" /* 106ac <ux00boot_load_gpt_partition+0xac> */
     /* 10674: */ "slli    a5,a5,0x20\n"
     /* 10676: */ "srli    a5,a5,0x20\n"
-    /* 10678: */ "la      a4,%1\n"
+    /* 10678: */ "la      a4,jumptableB\n"
     /* 10680: */ "slli    a5,a5,0x2\n"
     /* 10682: */ "add     a5,a5,a4\n"
     /* 10684: */ "lw      a5,0(a5)\n"
@@ -926,7 +949,7 @@ void ux00boot_load_gpt_partition(void* dst, const gpt_guid* partition_type_guid,
     /* 10692: */ "bltu    a4,a3,20f\n" /* 107f4 <ux00boot_load_gpt_partition+0x1f4> */
     /* 10696: */ "slli    a5,a5,0x20\n"
     /* 10698: */ "srli    a5,a5,0x20\n"
-    /* 1069a: */ "la      a4,%2\n"
+    /* 1069a: */ "la      a4,jumptableC\n"
     /* 106a2: */ "slli    a5,a5,0x2\n"
     /* 106a4: */ "add     a5,a5,a4\n"
     /* 106a6: */ "lw      a5,0(a5)\n"
@@ -985,6 +1008,7 @@ void ux00boot_load_gpt_partition(void* dst, const gpt_guid* partition_type_guid,
     /* 10728: */ "ld      s3,8(sp)\n"
     /* 1072a: */ "addi    sp,sp,48\n"
     /* 1072c: */ "ret\n"
+                 ".LB_1:\n"
     /* 1072e: */ "li      a5,0\n"
                  "10:\n"
     /* 10730: */ "bnez    a5,21f\n" /* 107fc <ux00boot_load_gpt_partition+0x1fc> */
@@ -1018,6 +1042,7 @@ void ux00boot_load_gpt_partition(void* dst, const gpt_guid* partition_type_guid,
     /* 10778: */ "lui     a5,0x6b2\n"
     /* 1077c: */ "addi    a5,a5,135 # 6b2087 <_data_lma+0x69f01f>\n"
     /* 10780: */ "j       8b\n" /* 106fa <ux00boot_load_gpt_partition+0xfa> */
+                 ".LB_2:\n"
     /* 10782: */ "lui     s2,0x10040\n"
                  "13:\n"
     /* 10786: */ "li      a2,0\n"
@@ -1041,7 +1066,7 @@ void ux00boot_load_gpt_partition(void* dst, const gpt_guid* partition_type_guid,
     /* 107aa: */ "bltu    a5,a4,18f\n" /* 107ce <ux00boot_load_gpt_partition+0x1ce> */
     /* 107ae: */ "slli    a0,a0,0x20\n"
     /* 107b0: */ "srli    a0,a0,0x1e\n"
-    /* 107b2: */ "la      a5,%3\n"
+    /* 107b2: */ "la      a5,%0\n"
     /* 107ba: */ "add     a0,a0,a5\n"
     /* 107bc: */ "lw      a0,0(a0)\n"
     /* 107be: */ "beqz    a0,14b\n" /* 10794 <ux00boot_load_gpt_partition+0x194> */
@@ -1057,17 +1082,21 @@ void ux00boot_load_gpt_partition(void* dst, const gpt_guid* partition_type_guid,
                  "18:\n"
     /* 107ce: */ "li      a0,12\n"
     /* 107d0: */ "j       17b\n" /* 107c4 <ux00boot_load_gpt_partition+0x1c4> */
+                 ".LC_1:\n"
     /* 107d2: */ "li      s3,0\n"
     /* 107d4: */ "lui     s2,0x10050\n"
     /* 107d8: */ "j       11b\n" /* 1073a <ux00boot_load_gpt_partition+0x13a> */
+                 ".LC_2:\n"
     /* 107da: */ "lui     s2,0x10050\n"
     /* 107de: */ "j       13b\n" /* 10786 <ux00boot_load_gpt_partition+0x186> */
                  "19:\n"
     /* 107e0: */ "lui     s3,0x30000\n"
     /* 107e4: */ "lui     s2,0x10041\n"
     /* 107e8: */ "j       6b\n" /* 106b4 <ux00boot_load_gpt_partition+0xb4> */
+                 ".LA_1:\n"
     /* 107ea: */ "li      a5,1\n"
     /* 107ec: */ "j       10b\n" /* 10730 <ux00boot_load_gpt_partition+0x130> */
+                 ".LA_2:\n"
     /* 107ee: */ "lui     s2,0x10041\n"
     /* 107f2: */ "j       13b\n" /* 10786 <ux00boot_load_gpt_partition+0x186> */
                  "20:\n"
@@ -1078,6 +1107,7 @@ void ux00boot_load_gpt_partition(void* dst, const gpt_guid* partition_type_guid,
     /* 107fc: */ "lui     s3,0x30000\n"
     /* 10800: */ "lui     s2,0x10041\n"
     /* 10804: */ "j       11b\n" /* 1073a <ux00boot_load_gpt_partition+0x13a> */
+                 ".LC_3:\n"
     /* 10806: */ "lui     s2,0x10050\n"
                  "22:\n"
     /* 1080a: */ "lui     a4,0x5\n"
@@ -1110,13 +1140,15 @@ void ux00boot_load_gpt_partition(void* dst, const gpt_guid* partition_type_guid,
     /* 1084e: */ "call    load_spiflash_gpt_partition\n"
     /* 10852: */ "sext.w  a0,a0\n"
     /* 10854: */ "j       9b\n" /* 1071e <ux00boot_load_gpt_partition+0x11e> */
+                 ".LA_3:\n"
     /* 10856: */ "lui     s2,0x10041\n"
     /* 1085a: */ "j       22b\n" /* 1080a <ux00boot_load_gpt_partition+0x20a> */
+                 ".LB_3:\n"
     /* 1085c: */ "lui     s2,0x10040\n"
     /* 10860: */ "j       22b\n" /* 1080a <ux00boot_load_gpt_partition+0x20a> */
                  ".short 0\n"
     :
-    : "i" (data1), "i" (data2), "i" (data3), "i" (data4)
+    : "i" (data)
   );
   __builtin_unreachable();
 #endif

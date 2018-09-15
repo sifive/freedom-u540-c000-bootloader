@@ -155,6 +155,9 @@ u540-c000-release/bootrom.bin.elf: u540-c000-release/bootrom.bin.text u540-c000-
 	  --add-section .rodata=u540-c000-release/bootrom.bin.rodata \
 	  --change-section-address .rodata+0x10dc8 \
 	  --add-symbol _dtb=.rodata:0x0,local \
+	  --add-symbol jumptableA=.rodata:0x21d0,local,object \
+	  --add-symbol jumptableB=.rodata:0x21f8,local,object \
+	  --add-symbol jumptableC=.rodata:0x2220,local,object \
 	  --add-symbol _edata=.rodata:0x22a0,global \
 	  --add-symbol gpt_guid_sifive_fsbl=.rodata:0x2280,global,object \
 	  --add-symbol _data=.rodata:0x80ef238,global \
