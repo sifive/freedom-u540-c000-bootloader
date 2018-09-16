@@ -842,8 +842,13 @@ void ux00boot_load_gpt_partition(void* dst, const gpt_guid* partition_type_guid,
     ux00boot_fail(error, 0);
   }
 #else
-  static const uint32_t data[6] = {
-    5, 6, 7, 8, 9, 0,
+  static const uint32_t sd_init_error_to_error_code[6] = {
+    [SD_INIT_ERROR_CMD0   - 1] = ERROR_CODE_SD_CARD_CMD0,
+    [SD_INIT_ERROR_CMD8   - 1] = ERROR_CODE_SD_CARD_CMD8,
+    [SD_INIT_ERROR_ACMD41 - 1] = ERROR_CODE_SD_CARD_ACMD41,
+    [SD_INIT_ERROR_CMD58  - 1] = ERROR_CODE_SD_CARD_CMD58,
+    [SD_INIT_ERROR_CMD16  - 1] = ERROR_CODE_SD_CARD_CMD16,
+    0,
   };
 
   __asm__ __volatile__ (
@@ -1148,7 +1153,7 @@ void ux00boot_load_gpt_partition(void* dst, const gpt_guid* partition_type_guid,
     /* 10860: */ "j       22b\n" /* 1080a <ux00boot_load_gpt_partition+0x20a> */
                  ".short 0\n"
     :
-    : "i" (data)
+    : "i" (sd_init_error_to_error_code)
   );
   __builtin_unreachable();
 #endif
