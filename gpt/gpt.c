@@ -59,6 +59,7 @@ static inline bool guid_equal(const gpt_guid* a, const gpt_guid* b)
  */
 gpt_partition_range gpt_find_partition_by_guid(const void* entries, const gpt_guid* guid, uint32_t num_entries)
 {
+#if 0
   gpt_partition_entry* gpt_entries = (gpt_partition_entry*) entries;
   for (uint32_t i = 0; i < num_entries; i++) {
     if (guid_equal(&gpt_entries[i].partition_type_guid, guid)) {
@@ -69,4 +70,48 @@ gpt_partition_range gpt_find_partition_by_guid(const void* entries, const gpt_gu
     }
   }
   return (gpt_partition_range) { .first_lba = 0, .last_lba = 0 };
+#else
+  __asm__ __volatile__ (
+    /* 1088e: */ "addi    sp,sp,-16\n"
+    /* 10890: */ "beqz    a2,4f\n" /* 108c8 <gpt_find_partition_by_guid+0x3a> */
+    /* 10892: */ "addiw   a7,a2,-1\n"
+    /* 10896: */ "slli    a7,a7,0x20\n"
+    /* 10898: */ "srli    a7,a7,0x19\n"
+    /* 1089c: */ "add     a7,a7,a0\n"
+    /* 1089e: */ "addi    a7,a7,128\n"
+                 "1:\n"
+    /* 108a2: */ "mv      a4,a1\n"
+    /* 108a4: */ "addi    a6,a0,16 # 10010010 <_sp+0x7e30010>\n"
+    /* 108a8: */ "mv      a5,a0\n"
+    /* 108aa: */ "j       3f\n" /* 108b0 <gpt_find_partition_by_guid+0x22> */
+                 "2:\n"
+    /* 108ac: */ "beq     a5,a6,5f\n" /* 108d4 <gpt_find_partition_by_guid+0x46> */
+                 "3:\n"
+    /* 108b0: */ "lbu     a2,0(a5)\n"
+    /* 108b4: */ "lbu     a3,0(a4)\n"
+    /* 108b8: */ "addi    a5,a5,1\n"
+    /* 108ba: */ "addi    a4,a4,1\n"
+    /* 108bc: */ "beq     a2,a3,2b\n" /* 108ac <gpt_find_partition_by_guid+0x1e> */
+    /* 108c0: */ "addi    a0,a0,128\n"
+    /* 108c4: */ "bne     a0,a7,1b\n" /* 108a2 <gpt_find_partition_by_guid+0x14> */
+                 "4:\n"
+    /* 108c8: */ "sd      zero,0(sp)\n"
+    /* 108ca: */ "sd      zero,8(sp)\n"
+    /* 108cc: */ "ld      a0,0(sp)\n"
+    /* 108ce: */ "ld      a1,8(sp)\n"
+    /* 108d0: */ "addi    sp,sp,16\n"
+    /* 108d2: */ "ret\n"
+                 "5:\n"
+    /* 108d4: */ "ld      a4,40(a0)\n"
+    /* 108d6: */ "ld      a5,32(a0)\n"
+    /* 108d8: */ "sd      a4,8(sp)\n"
+    /* 108da: */ "sd      a5,0(sp)\n"
+    /* 108dc: */ "ld      a0,0(sp)\n"
+    /* 108de: */ "ld      a1,8(sp)\n"
+    /* 108e0: */ "addi    sp,sp,16\n"
+    /* 108e2: */ "ret\n"
+                 ".short 0\n"
+  );
+  __builtin_unreachable();
+#endif
 }

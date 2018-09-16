@@ -23,7 +23,7 @@ SECTIONS
 
   
 
-  .text ALIGN((ORIGIN(maskrom_mem) + 0x0), 64) : AT(ALIGN((ORIGIN(maskrom_mem) + 0x0), 64)) {
+  .text ALIGN((ORIGIN(maskrom_mem) + 0x0), 8) : AT(ALIGN((ORIGIN(maskrom_mem) + 0x0), 8)) {
     PROVIDE(_ftext = .);
     *(.text.init)
     *(.text.unlikely .text.unlikely.*)
@@ -32,15 +32,15 @@ SECTIONS
     . += 0x40; /* to create a gap between .text and .data b/c ifetch can fetch ahead from .data */
   } >maskrom_mem  :text
 
-  .eh_frame ALIGN((ADDR(.text) + SIZEOF(.text)), 64) : AT(ALIGN((LOADADDR(.text) + SIZEOF(.text)), 64)) {
+  .eh_frame ALIGN((ADDR(.text) + SIZEOF(.text)), 8) : AT(ALIGN((LOADADDR(.text) + SIZEOF(.text)), 8)) {
     *(.eh_frame)
   } >maskrom_mem  :text
 
-  .rodata ALIGN((ADDR(.eh_frame) + SIZEOF(.eh_frame)), 64) : AT(ALIGN((LOADADDR(.eh_frame) + SIZEOF(.eh_frame)), 64)) ALIGN_WITH_INPUT {
+  .rodata ALIGN((ADDR(.eh_frame) + SIZEOF(.eh_frame)), 8) : AT(ALIGN((LOADADDR(.eh_frame) + SIZEOF(.eh_frame)), 8)) ALIGN_WITH_INPUT {
     *(.rodata .rodata.* .gnu.linkonce.r.*)
   } >maskrom_mem  :rodata
 
-  .srodata ALIGN((ADDR(.rodata) + SIZEOF(.rodata)), 64) : AT(ALIGN((LOADADDR(.rodata) + SIZEOF(.rodata)), 64)) ALIGN_WITH_INPUT {
+  .srodata ALIGN((ADDR(.rodata) + SIZEOF(.rodata)), 8) : AT(ALIGN((LOADADDR(.rodata) + SIZEOF(.rodata)), 8)) ALIGN_WITH_INPUT {
     *(.srodata.cst16)
     *(.srodata.cst8)
     *(.srodata.cst4)
@@ -48,12 +48,12 @@ SECTIONS
     *(.srodata.*)
   } >maskrom_mem  :rodata
 
-  .data ALIGN((ORIGIN(ccache_sideband) + 0x100000), 64) : AT(ALIGN((LOADADDR(.srodata) + SIZEOF(.srodata)), 64)) ALIGN_WITH_INPUT {
+  .data ALIGN((ORIGIN(ccache_sideband) + 0x100000), 8) : AT(ALIGN((LOADADDR(.srodata) + SIZEOF(.srodata)), 8)) ALIGN_WITH_INPUT {
     *(.data .data.* .gnu.linkonce.d.*)
     *(.tohost) /* TODO: Support sections that aren't explicitly listed in this linker script */
   } >ccache_sideband  :data
 
-  .sdata ALIGN((ADDR(.data) + SIZEOF(.data)), 64) : AT(ALIGN((LOADADDR(.data) + SIZEOF(.data)), 64)) ALIGN_WITH_INPUT {
+  .sdata ALIGN((ADDR(.data) + SIZEOF(.data)), 8) : AT(ALIGN((LOADADDR(.data) + SIZEOF(.data)), 8)) ALIGN_WITH_INPUT {
     *(.sdata .sdata.* .gnu.linkonce.s.*)
   } >ccache_sideband  :data
 
@@ -61,7 +61,7 @@ SECTIONS
   PROVIDE(_data_lma = LOADADDR(.data));
   PROVIDE(_edata = .);
 
-  .bss ALIGN((ADDR(.sdata) + SIZEOF(.sdata)), 64) : AT(ALIGN((ORIGIN(ccache_sideband) + 0x100000), 64)) ALIGN(8) {
+  .bss ALIGN((ADDR(.sdata) + SIZEOF(.sdata)), 8) : AT(ALIGN((ORIGIN(ccache_sideband) + 0x100000), 8)) ALIGN(8) {
     PROVIDE(_fbss = .);
     PROVIDE(__global_pointer$ = . + 0x7C0);
     *(.sbss .sbss.* .gnu.linkonce.sb.*)

@@ -6,3 +6,4 @@
 *.bin
 *.asm
 lib/version.c
+u540-c000-release/bootrom.bin.*

@@ -224,40 +224,11 @@ typedef volatile struct
   spi_reg_ip ip;
 } spi_ctrl;
 
-
+unsigned int spi_min_clk_divisor(unsigned int input_khz, unsigned int max_target_khz);
 void spi_tx(spi_ctrl* spictrl, uint8_t in);
 uint8_t spi_rx(spi_ctrl* spictrl);
 uint8_t spi_txrx(spi_ctrl* spictrl, uint8_t in);
 int spi_copy(spi_ctrl* spictrl, void* buf, uint32_t addr, uint32_t size);
-
-
-// Inlining header functions in C
-// https://stackoverflow.com/a/23699777/7433423
-
-/**
- * Get smallest clock divisor that divides input_khz to a quotient less than or
- * equal to max_target_khz;
- */
-inline unsigned int spi_min_clk_divisor(unsigned int input_khz, unsigned int max_target_khz)
-{
-  // f_sck = f_in / (2 * (div + 1)) => div = (f_in / (2*f_sck)) - 1
-  //
-  // The nearest integer solution for div requires rounding up as to not exceed
-  // max_target_khz.
-  //
-  // div = ceil(f_in / (2*f_sck)) - 1
-  //     = floor((f_in - 1 + 2*f_sck) / (2*f_sck)) - 1
-  //
-  // This should not overflow as long as (f_in - 1 + 2*f_sck) does not exceed
-  // 2^32 - 1, which is unlikely since we represent frequencies in kHz.
-  unsigned int quotient = (input_khz + 2 * max_target_khz - 1) / (2 * max_target_khz);
-  // Avoid underflow
-  if (quotient == 0) {
-    return 0;
-  } else {
-    return quotient - 1;
-  }
-}
 
 #endif /* !__ASSEMBLER__ */
 
