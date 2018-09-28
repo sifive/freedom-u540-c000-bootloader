@@ -471,7 +471,7 @@ static int load_sd_mbr_partition(spi_ctrl* spictrl, void* dst)
 {
   uint8_t mbr_buf[MBR_SECTOR_SZ];
   int error;
-  error = sd_copy(spictrl, mbr_buf, MBR_HEADER_LBA, MBR_SECTOR_SZ);
+  error = sd_copy(spictrl, mbr_buf, MBR_HEADER_LBA, 1);
   if (error) return decode_sd_copy_error(error);
   
   mbr_partition_range part_range = mbr_find_partition_boot(mbr_buf);
