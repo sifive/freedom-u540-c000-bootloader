@@ -22,6 +22,7 @@ LIB_ZS1_O=\
 LIB_ZS2_O=\
 	clkutils/clkutils.o \
 	gpt/gpt.o \
+	mbr/mbr.o \
 	lib/memcpy.o \
 	sd/sd.o \
 
@@ -33,6 +34,7 @@ LIB_FS_O= \
 	fsbl/ux00boot.o \
 	clkutils/clkutils.o \
 	gpt/gpt.o \
+	mbr/mbr.o \
 	fdt/fdt.o \
 	sd/sd.o \
 	lib/memcpy.o \
