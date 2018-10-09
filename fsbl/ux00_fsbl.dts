@@ -154,6 +154,19 @@
 				interrupt-controller;
 			};
 		};
+		L0: cache-controller@2010000 {
+				cache-block-size = <64>;
+				cache-level = <2>;
+				cache-sets = <2048>;
+				cache-size = <2097152>;
+				cache-unified;
+				compatible = "sifive,ccache0", "cache";
+				interrupt-parent = <&L4>;
+				interrupts = <1 2 3>;
+				reg = <0x0 0x2010000 0x0 0x1000 0x0 0x8000000 0x0 0x2000000>;
+				reg-names = "control", "sideband";
+		};
+
 	};
 	L36: memory@80000000 {
 		device_type = "memory";
@@ -194,19 +207,6 @@
 			compatible = "sifive,bus-blocker0";
 			reg = <0x0 0x100b8000 0x0 0x1000>;
 			reg-names = "control";
-		};
-		L0: cache-controller@2010000 {
-			cache-block-size = <64>;
-			cache-level = <2>;
-			cache-sets = <2048>;
-			cache-size = <2097152>;
-			cache-unified;
-			compatible = "sifive,ccache0", "cache";
-			interrupt-parent = <&L4>;
-			interrupts = <1 2 3>;
-			next-level-cache = <&L25 &L40 &L36>;
-			reg = <0x0 0x2010000 0x0 0x1000 0x0 0x8000000 0x0 0x2000000>;
-			reg-names = "control", "sideband";
 		};
 		L33: cadence-ddr-mgmt@100c0000 {
 			compatible = "sifive,cadenceddrmgmt0";
