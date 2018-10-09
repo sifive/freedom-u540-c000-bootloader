@@ -34,7 +34,7 @@
 			i-cache-block-size = <64>;
 			i-cache-sets = <128>;
 			i-cache-size = <16384>;
-			next-level-cache = <&L24 &L0>;
+			next-level-cache = <&L0>;
 			reg = <0>;
 			riscv,isa = "rv64imac";
 			sifive,dtim = <&L8>;
@@ -61,7 +61,7 @@
 			i-tlb-sets = <1>;
 			i-tlb-size = <32>;
 			mmu-type = "riscv,sv39";
-			next-level-cache = <&L24 &L0>;
+			next-level-cache = <&L0>;
 			reg = <1>;
 			riscv,isa = "rv64imafdc";
 			sifive,itim = <&L11>;
@@ -88,7 +88,7 @@
 			i-tlb-sets = <1>;
 			i-tlb-size = <32>;
 			mmu-type = "riscv,sv39";
-			next-level-cache = <&L24 &L0>;
+			next-level-cache = <&L0>;
 			reg = <2>;
 			riscv,isa = "rv64imafdc";
 			sifive,itim = <&L14>;
@@ -115,7 +115,7 @@
 			i-tlb-sets = <1>;
 			i-tlb-size = <32>;
 			mmu-type = "riscv,sv39";
-			next-level-cache = <&L24 &L0>;
+			next-level-cache = <&L0>;
 			reg = <3>;
 			riscv,isa = "rv64imafdc";
 			sifive,itim = <&L17>;
@@ -142,7 +142,7 @@
 			i-tlb-sets = <1>;
 			i-tlb-size = <32>;
 			mmu-type = "riscv,sv39";
-			next-level-cache = <&L24 &L0>;
+			next-level-cache = <&L0>;
 			reg = <4>;
 			riscv,isa = "rv64imafdc";
 			sifive,itim = <&L20>;
