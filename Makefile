@@ -39,8 +39,7 @@ LIB_FS_O= \
 	lib/memset.o \
 	lib/strcmp.o \
 	lib/strlen.o \
-	fsbl/dtb.o \
-	
+	fsbl/dtb.o
 
 H=$(wildcard *.h */*.h)
 
@@ -78,8 +77,8 @@ zsbl/start.o: zsbl/ux00_zsbl.dtb
 %.asm: %.elf
 	$(OBJDUMP) -S $^ > $@
 
-%.dtb: %.dts
-	dtc $^ -o $@ -O dtb
+#%.dtb: %.dtb
+#	dtc $^ -o $@ -O dtb
 
 %.o: %.S
 	$(CC) $(CFLAGS) $(CCASFLAGS) -c $< -o $@
@@ -88,4 +87,4 @@ zsbl/start.o: zsbl/ux00_zsbl.dtb
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 clean::
-	rm -f */*.o */*.dtb zsbl.bin zsbl.elf zsbl.asm fsbl.bin fsbl.elf fsbl.asm lib/version.c
+	rm -f */*.o zsbl/*.dtb zsbl.bin zsbl.elf zsbl.asm fsbl.bin fsbl.elf fsbl.asm lib/version.c
