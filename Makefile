@@ -3,11 +3,11 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 # See the file LICENSE for further information
 
-CROSSCOMPILE?=riscv64-unknown-elf-
-CC=${CROSSCOMPILE}gcc
-LD=${CROSSCOMPILE}ld
-OBJCOPY=${CROSSCOMPILE}objcopy
-OBJDUMP=${CROSSCOMPILE}objdump
+CROSS_COMPILE?=riscv64-unknown-elf-
+CC=${CROSS_COMPILE}gcc
+LD=${CROSS_COMPILE}ld
+OBJCOPY=${CROSS_COMPILE}objcopy
+OBJDUMP=${CROSS_COMPILE}objdump
 CFLAGS=-I. -O2 -ggdb -march=rv64imafdc -mabi=lp64d -Wall -mcmodel=medany -mexplicit-relocs
 CCASFLAGS=-I. -mcmodel=medany -mexplicit-relocs
 LDFLAGS=-nostdlib -nostartfiles
