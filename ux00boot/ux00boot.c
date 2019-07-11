@@ -76,6 +76,7 @@ typedef enum {
   UX00BOOT_ROUTINE_MMAP_QUAD,  // Enable quad SPI mode and then read from memory-mapped SPI region
   UX00BOOT_ROUTINE_SDCARD,  // Initialize SD card controller and then use SPI commands to read one byte at a time
   UX00BOOT_ROUTINE_SDCARD_NO_INIT,  // Use SD SPI commands to read one byte at a time without initialization
+  UX00BOOT_ROUTINE_LOOP,  // Prepare all stuff of next stage by debugger
 } ux00boot_routine;
 
 
@@ -130,6 +131,9 @@ static int get_boot_spi_device(uint32_t mode_select)
     case MODESELECT_ZSBL_SPI0_FLASH_FSBL_SPI2_SDCARD:
     case MODESELECT_ZSBL_SPI0_MMAP_QUAD_FSBL_SPI2_SDCARD:
       spi_device = 2;
+      break;
+    case MODESELECT_LOOP:
+      spi_device = 3;
       break;
     default:
       spi_device = -1;
@@ -193,6 +197,9 @@ static ux00boot_routine get_boot_routine(uint32_t mode_select)
     case MODESELECT_ZSBL_SPI0_FLASH_FSBL_SPI2_SDCARD:
     case MODESELECT_ZSBL_SPI0_MMAP_QUAD_FSBL_SPI2_SDCARD:
       boot_routine = UX00BOOT_ROUTINE_SDCARD;
+      break;
+    case MODESELECT_LOOP:
+      boot_routine = UX00BOOT_ROUTINE_LOOP;
       break;
   }
 #else
@@ -536,6 +543,9 @@ void ux00boot_load_gpt_partition(void* dst, const gpt_guid* partition_type_guid,
     case 2:
       spictrl = (spi_ctrl*) SPI2_CTRL_ADDR;
       break;
+    case 3:
+      // MODESELECT_LOOP. Don't try to find spi device in debug mode.
+      break;
     default:
       ux00boot_fail(ERROR_CODE_UNHANDLED_SPI_DEVICE, 0);
       break;
@@ -564,6 +574,14 @@ void ux00boot_load_gpt_partition(void* dst, const gpt_guid* partition_type_guid,
         error = initialize_sd(spictrl, peripheral_input_khz, skip_sd_init_commands);
         if (!error) error = load_sd_gpt_partition(spictrl, dst, partition_type_guid);
       }
+      break;
+    case UX00BOOT_ROUTINE_LOOP:
+      error = 0;
+      /**
+       * Control transfer back to debugger.
+       * Debugger can load next stage to PAYLOAD_DEST.
+       */
+      asm volatile ("ebreak");
       break;
     default:
       error = ERROR_CODE_UNHANDLED_BOOT_ROUTINE;
