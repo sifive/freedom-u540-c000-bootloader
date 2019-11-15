@@ -23,7 +23,7 @@
 #endif
 
 /* If your test cannot handle multiple-threads, use this: 
- *   smp_disable(reg1)
+ *   smp_disable(reg1, reg2)
  */
 #define smp_disable(reg1, reg2)			 \
   csrr reg1, mhartid				;\
