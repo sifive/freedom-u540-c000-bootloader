@@ -73,7 +73,7 @@ fsbl/dtb.o: fsbl/ux00_fsbl.dtb
 zsbl/start.o: zsbl/ux00_zsbl.dtb
 
 %.bin: %.elf
-	$(OBJCOPY) -O binary $^ $@
+	$(OBJCOPY) -S -R .comment -R .note.gnu.build-id -O binary $^ $@
 
 %.asm: %.elf
 	$(OBJDUMP) -S $^ > $@
