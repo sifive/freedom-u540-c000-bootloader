@@ -218,3 +218,17 @@ trap_entry:
   csrr  t0,mcause
   add   a0,zero,t0
   j     _fail
+
+/* All L2 cache ways will be enabled in the CCache trmpoline */
+  .global _CCache_trampoline_start
+_CCache_trampoline_start:
+1:
+  fence	rw, io
+  li	t0, CCACHE_CTRL_ADDR
+  addi	t0, t0,CCACHE_ENABLE
+  li	t1, 15
+  amoswap.w t1,t1,(t0)
+  fence io, rw
+  unimp
+  .global _CCache_trampoline_end
+_CCache_trampoline_end:

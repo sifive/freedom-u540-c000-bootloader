@@ -54,7 +54,9 @@
 Barrier barrier = { {0, 0}, {0, 0}, 0}; // bss initialization is done by main core while others do wfi
 
 extern const gpt_guid gpt_guid_sifive_bare_metal;
+extern uint64_t *_CCache_trampoline_start, *_CCache_trampoline_end;
 volatile uint64_t dtb_target;
+void (* ccache_trampoline) (void);
 unsigned int serial_to_burn = ~0;
 
 uint32_t __attribute__((weak)) own_dtb = 42; // not 0xedfe0dd0 the DTB magic
@@ -388,6 +390,11 @@ int main(int id, unsigned long dtb)
   puts("Loading boot payload");
   ux00boot_load_gpt_partition((void*) PAYLOAD_DEST, &gpt_guid_sifive_bare_metal, peripheral_input_khz);
 
+  // Create the CCache trampoline at DRAM.
+  ccache_trampoline = (void *)(dtb_target - 0x1000); // dtb_target - 4KB
+  memcpy((void *)ccache_trampoline, (void *)(&_CCache_trampoline_start),
+		(uint64_t)&_CCache_trampoline_end- (uint64_t)&_CCache_trampoline_start);
+
   puts("\r\n\n");
   slave_main(0, dtb);
 
@@ -415,10 +422,10 @@ int slave_main(int id, unsigned long dtb)
 #else
   register unsigned long a1 asm("a1") = dtb_target;
 #endif
-  // These next two guys must get inlined and not spill a0+a1 or it is broken!
+  // The next one guy must get inlined and not spill a0+a1 or it is broken!
   Barrier_Wait(&barrier, NUM_CORES);
-  ccache_enable_ways(CCACHE_CTRL_ADDR,14);
-  asm volatile ("unimp" : : "r"(a0), "r"(a1));
 
+  // Jump to the CCache trampoline
+  ccache_trampoline();
   return 0;
 }
