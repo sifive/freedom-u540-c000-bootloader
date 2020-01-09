@@ -7,3 +7,7 @@
   .globl own_dtb
 own_dtb:
   .incbin "fsbl/ux00_fsbl.dtb"
+
+  .globl microsemi_dtb
+microsemi_dtb:
+  .incbin "fsbl/ux00_fsbl_microsemi.dtb"

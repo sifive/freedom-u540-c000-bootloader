@@ -68,9 +68,12 @@ fsbl/ux00boot.o: ux00boot/ux00boot.c
 fsbl.elf: $(LIB_FS_O) ux00_fsbl.lds
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(filter %.o,$^) -T$(filter %.lds,$^)
 
-fsbl/dtb.o: fsbl/ux00_fsbl.dtb
+fsbl/dtb.o: fsbl/ux00_fsbl.dtb fsbl/ux00_fsbl_microsemi.dtb
 
 zsbl/start.o: zsbl/ux00_zsbl.dtb
+
+fsbl/ux00_fsbl_microsemi.dtb: fsbl/ux00_fsbl.dts fsbl/ux00_fsbl_microsemi.dts
+	cat $^ | dtc - -o $@ -O dtb
 
 %.bin: %.elf
 	$(OBJCOPY) -S -R .comment -R .note.gnu.build-id -O binary $^ $@
@@ -79,7 +82,7 @@ zsbl/start.o: zsbl/ux00_zsbl.dtb
 	$(OBJDUMP) -S $^ > $@
 
 %.dtb: %.dts
-	dtc $^ -o $@ -O dtb
+	dtc $< -o $@ -O dtb
 
 %.o: %.S
 	$(CC) $(CFLAGS) $(CCASFLAGS) -c $< -o $@
