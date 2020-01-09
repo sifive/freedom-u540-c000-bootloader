@@ -269,8 +269,7 @@ static int decode_sd_copy_error(int error)
   }
 }
 
-
-static int load_sd_gpt_partition(spi_ctrl* spictrl, void* dst, const gpt_guid* partition_type_guid)
+__attribute__((always_inline)) static inline int _load_sd_gpt_partition(spi_ctrl* spictrl, void* dst, const gpt_guid* partition_type_guid)
 {
   uint8_t gpt_buf[GPT_BLOCK_SIZE];
   int error;
@@ -388,7 +387,7 @@ static gpt_partition_range find_mmap_gpt_partition(const void* gpt_base, const g
 /**
  * Load GPT partition from memory-mapped GPT image.
  */
-static int load_mmap_gpt_partition(const void* gpt_base, void* payload_dest, const gpt_guid* partition_type_guid)
+static inline int _load_mmap_gpt_partition(const void* gpt_base, void* payload_dest, const gpt_guid* partition_type_guid)
 {
   gpt_partition_range range = find_mmap_gpt_partition(gpt_base, partition_type_guid);
   if (!gpt_is_valid_partition_range(range)) {
@@ -436,7 +435,7 @@ static gpt_partition_range find_spiflash_gpt_partition(
 /**
  * Load GPT partition from SPI flash.
  */
-static int load_spiflash_gpt_partition(spi_ctrl* spictrl, void* dst, const gpt_guid* partition_type_guid)
+__attribute__((always_inline)) static inline int _load_spiflash_gpt_partition(spi_ctrl* spictrl, void* dst, const gpt_guid* partition_type_guid)
 {
   uint8_t gpt_buf[GPT_BLOCK_SIZE];
   int error;
@@ -471,7 +470,7 @@ static int load_spiflash_gpt_partition(spi_ctrl* spictrl, void* dst, const gpt_g
 }
 
 
-void ux00boot_fail(long code, int trap)
+static inline void _ux00boot_fail(long code, int trap)
 {
   if (read_csr(mhartid) == NONSMP_HART) {
     // Print error code to UART
@@ -496,7 +495,8 @@ void ux00boot_fail(long code, int trap)
     formatted_code = INSERT_FIELD(formatted_code, ERROR_CODE_TRAP, trap);
     formatted_code = INSERT_FIELD(formatted_code, ERROR_CODE_ERRORCODE, error_code);
 
-    uart_puts((void*) UART0_CTRL_ADDR, "Error 0x");
+    static const char errorStr[] = "Error 0x";
+    uart_puts((void*) UART0_CTRL_ADDR, errorStr);
     uart_put_hex((void*) UART0_CTRL_ADDR, formatted_code >> 32);
     uart_put_hex((void*) UART0_CTRL_ADDR, formatted_code);
   }
@@ -520,8 +520,9 @@ void ux00boot_fail(long code, int trap)
  * Read from mode select device to determine which bulk storage medium to read
  * GPT image from, and properly initialize the bulk storage based on type.
  */
-void ux00boot_load_gpt_partition(void* dst, const gpt_guid* partition_type_guid, unsigned int peripheral_input_khz)
+static inline void _ux00boot_load_gpt_partition(void* dst, const gpt_guid* partition_type_guid, unsigned int peripheral_input_khz)
 {
+#if 0
   uint32_t mode_select = *((volatile uint32_t*) MODESELECT_MEM_ADDR);
 
   spi_ctrl* spictrl = NULL;
@@ -591,4 +592,257 @@ void ux00boot_load_gpt_partition(void* dst, const gpt_guid* partition_type_guid,
   if (error) {
     ux00boot_fail(error, 0);
   }
+#else
+  /* Based on @esmil's work */
+  __asm__ __volatile__ (
+    /* 10600: */ "lui     a5,0x1\n"
+    /* 10602: */ "lw      a5,0(a5)\n"
+    /* 10604: */ "addi    sp,sp,-48\n"
+    /* 10606: */ "sd      ra,40(sp)\n"
+    /* 10608: */ "sext.w  a5,a5\n"
+    /* 1060a: */ "sd      s0,32(sp)\n"
+    /* 1060c: */ "sd      s1,24(sp)\n"
+    /* 1060e: */ "sd      s2,16(sp)\n"
+    /* 10610: */ "sd      s3,8(sp)\n"
+    /* 10612: */ "li      a4,10\n"
+    /* 10614: */ "addiw   a3,a5,-5\n"
+    /* 10618: */ "bleu    a3,a4,2f\n" /* 10628 <ux00boot_load_gpt_partition+0x28> */
+                 "1:\n"
+    /* 1061c: */ "li      a1,0\n"
+    /* 1061e: */ "li      a0,1\n"
+    /* 10620: */ "call    ux00boot_fail\n"
+                 "2:\n"
+    /* 10628: */ "li      a4,1\n"
+    /* 1062a: */ "sll     a4,a4,a3\n"
+    /* 1062e: */ "andi    a3,a4,1571\n"
+    /* 10632: */ "mv      s1,a1\n"
+    /* 10634: */ "mv      s0,a0\n"
+    /* 10636: */ "mv      a1,a2\n"
+    /* 10638: */ "bnez    a3,3f\n" /* 10668 <ux00boot_load_gpt_partition+0x68> */
+    /* 1063a: */ "andi    a3,a4,80\n"
+    /* 1063e: */ "bnez    a3,4f\n" /* 1068a <ux00boot_load_gpt_partition+0x8a> */
+    /* 10640: */ "andi    a4,a4,396\n"
+    /* 10644: */ "beqz    a4,1b\n" /* 1061c <ux00boot_load_gpt_partition+0x1c> */
+    /* 10646: */ "addiw   a5,a5,-6\n"
+    /* 10648: */ "sext.w  a3,a5\n"
+    /* 1064c: */ "li      a4,9\n"
+    /* 1064e: */ "bltu    a4,a3,19f\n" /* 107e0 <ux00boot_load_gpt_partition+0x1e0> */
+    /* 10652: */ "slli    a5,a5,0x20\n"
+    /* 10654: */ "srli    a5,a5,0x20\n"
+    /* 10656: */ "la      a4,jt1\n"
+    /* 1065e: */ "slli    a5,a5,0x2\n"
+    /* 10660: */ "add     a5,a5,a4\n"
+    /* 10662: */ "lw      a5,0(a5)\n"
+    /* 10664: */ "add     a5,a5,a4\n"
+    /* 10666: */ "jr      a5\n"
+                 "3:\n"
+    /* 10668: */ "addiw   a5,a5,-6\n"
+    /* 1066a: */ "sext.w  a3,a5\n"
+    /* 1066e: */ "li      a4,9\n"
+    /* 10670: */ "bltu    a4,a3,5f\n" /* 106ac <ux00boot_load_gpt_partition+0xac> */
+    /* 10674: */ "slli    a5,a5,0x20\n"
+    /* 10676: */ "srli    a5,a5,0x20\n"
+    /* 10678: */ "la      a4,jt2\n"
+    /* 10680: */ "slli    a5,a5,0x2\n"
+    /* 10682: */ "add     a5,a5,a4\n"
+    /* 10684: */ "lw      a5,0(a5)\n"
+    /* 10686: */ "add     a5,a5,a4\n"
+    /* 10688: */ "jr      a5\n"
+                 "4:\n"
+    /* 1068a: */ "addiw   a5,a5,-6\n"
+    /* 1068c: */ "sext.w  a3,a5\n"
+    /* 10690: */ "li      a4,9\n"
+    /* 10692: */ "bltu    a4,a3,20f\n" /* 107f4 <ux00boot_load_gpt_partition+0x1f4> */
+    /* 10696: */ "slli    a5,a5,0x20\n"
+    /* 10698: */ "srli    a5,a5,0x20\n"
+    /* 1069a: */ "la      a4,jt3\n"
+    /* 106a2: */ "slli    a5,a5,0x2\n"
+    /* 106a4: */ "add     a5,a5,a4\n"
+    /* 106a6: */ "lw      a5,0(a5)\n"
+    /* 106a8: */ "add     a5,a5,a4\n"
+    /* 106aa: */ "jr      a5\n"
+                 "5:\n"
+    /* 106ac: */ "lui     s3,0x20000\n"
+    /* 106b0: */ "lui     s2,0x10040\n"
+                 "6:\n"
+    /* 106b4: */ "lui     a4,0x5\n"
+    /* 106b6: */ "addiw   a5,a4,-481\n"
+    /* 106ba: */ "addw    a1,a1,a5\n"
+    /* 106bc: */ "addiw   a4,a4,-480\n"
+    /* 106c0: */ "divuw   a5,a1,a4\n"
+    /* 106c4: */ "beqz    a5,7f\n" /* 106c8 <ux00boot_load_gpt_partition+0xc8> */
+    /* 106c6: */ "addiw   a5,a5,-1\n"
+                 "7:\n"
+    /* 106c8: */ "sw      a5,0(s2) # 10040000 <_sp+0x7e60000>\n"
+    /* 106cc: */ "lw      a5,96(s2)\n"
+    /* 106d0: */ "li      a1,102\n"
+    /* 106d4: */ "mv      a0,s2\n"
+    /* 106d6: */ "andi    a5,a5,-2\n"
+    /* 106d8: */ "sw      a5,96(s2)\n"
+    /* 106dc: */ "call    spi_txrx\n"
+    /* 106e4: */ "li      a1,153\n"
+    /* 106e8: */ "mv      a0,s2\n"
+    /* 106ea: */ "call    spi_txrx\n"
+    /* 106f2: */ "lui     a5,0x30\n"
+    /* 106f6: */ "ori     a5,a5,7\n"
+                 "8:\n"
+    /* 106fa: */ "sw      a5,100(s2)\n"
+    /* 106fe: */ "lw      a5,96(s2)\n"
+    /* 10702: */ "ori     a5,a5,1\n"
+    /* 10706: */ "sw      a5,96(s2)\n"
+    /* 1070a: */ "fence   io,io\n"
+    /* 1070e: */ "mv      a2,s1\n"
+    /* 10710: */ "mv      a1,s0\n"
+    /* 10712: */ "mv      a0,s3\n"
+    /* 10714: */ "call    load_mmap_gpt_partition\n"
+    /* 1071c: */ "sext.w  a0,a0\n"
+                 "9:\n"
+    /* 1071e: */ "bnez    a0,16f\n" /* 107c0 <ux00boot_load_gpt_partition+0x1c0> */
+    /* 10720: */ "ld      ra,40(sp)\n"
+    /* 10722: */ "ld      s0,32(sp)\n"
+    /* 10724: */ "ld      s1,24(sp)\n"
+    /* 10726: */ "ld      s2,16(sp)\n"
+    /* 10728: */ "ld      s3,8(sp)\n"
+    /* 1072a: */ "addi    sp,sp,48\n"
+    /* 1072c: */ "ret\n"
+                 "jt2e1:\n"
+    /* 1072e: */ "li      a5,0\n"
+                 "10:\n"
+    /* 10730: */ "bnez    a5,21f\n" /* 107fc <ux00boot_load_gpt_partition+0x1fc> */
+    /* 10732: */ "lui     s3,0x20000\n"
+    /* 10736: */ "lui     s2,0x10040\n"
+                 "11:\n"
+    /* 1073a: */ "lui     a4,0x5\n"
+    /* 1073c: */ "addiw   a5,a4,-481\n"
+    /* 10740: */ "addw    a1,a1,a5\n"
+    /* 10742: */ "addiw   a4,a4,-480\n"
+    /* 10746: */ "divuw   a5,a1,a4\n"
+    /* 1074a: */ "beqz    a5,12f\n" /* 1074e <ux00boot_load_gpt_partition+0x14e> */
+    /* 1074c: */ "addiw   a5,a5,-1\n"
+                 "12:\n"
+    /* 1074e: */ "sw      a5,0(s2) # 10040000 <_sp+0x7e60000>\n"
+    /* 10752: */ "lw      a5,96(s2)\n"
+    /* 10756: */ "li      a1,102\n"
+    /* 1075a: */ "mv      a0,s2\n"
+    /* 1075c: */ "andi    a5,a5,-2\n"
+    /* 1075e: */ "sw      a5,96(s2)\n"
+    /* 10762: */ "call    spi_txrx\n"
+    /* 1076a: */ "li      a1,153\n"
+    /* 1076e: */ "mv      a0,s2\n"
+    /* 10770: */ "call    spi_txrx\n"
+    /* 10778: */ "lui     a5,0x6b2\n"
+    /* 1077c: */ "addi    a5,a5,135 # 6b2087 <_data_lma+0x69f01f>\n"
+    /* 10780: */ "j       8b\n" /* 106fa <ux00boot_load_gpt_partition+0xfa> */
+                 "jt2e2:\n"
+    /* 10782: */ "lui     s2,0x10040\n"
+                 "13:\n"
+    /* 10786: */ "li      a2,0\n"
+    /* 10788: */ "mv      a0,s2\n"
+    /* 1078a: */ "call    sd_init\n"
+    /* 10792: */ "bnez    a0,15f\n" /* 107a2 <ux00boot_load_gpt_partition+0x1a2> */
+                 "14:\n"
+    /* 10794: */ "mv      a2,s1\n"
+    /* 10796: */ "mv      a1,s0\n"
+    /* 10798: */ "mv      a0,s2\n"
+    /* 1079a: */ "call    load_sd_gpt_partition\n"
+    /* 1079e: */ "sext.w  a0,a0\n"
+    /* 107a0: */ "j       9b\n" /* 1071e <ux00boot_load_gpt_partition+0x11e> */
+                 "15:\n"
+    /* 107a2: */ "addiw   a0,a0,-1\n"
+    /* 107a4: */ "sext.w  a4,a0\n"
+    /* 107a8: */ "li      a5,4\n"
+    /* 107aa: */ "bltu    a5,a4,18f\n" /* 107ce <ux00boot_load_gpt_partition+0x1ce> */
+    /* 107ae: */ "slli    a0,a0,0x20\n"
+    /* 107b0: */ "srli    a0,a0,0x1e\n"
+    /* 107b2: */ "la      a5,data4\n"
+    /* 107ba: */ "add     a0,a0,a5\n"
+    /* 107bc: */ "lw      a0,0(a0)\n"
+    /* 107be: */ "beqz    a0,14b\n" /* 10794 <ux00boot_load_gpt_partition+0x194> */
+                 "16:\n"
+    /* 107c0: */ "slli    a0,a0,0x20\n"
+    /* 107c2: */ "srli    a0,a0,0x20\n"
+                 "17:\n"
+    /* 107c4: */ "li      a1,0\n"
+    /* 107c6: */ "call    ux00boot_fail\n"
+                 "18:\n"
+    /* 107ce: */ "li      a0,12\n"
+    /* 107d0: */ "j       17b\n" /* 107c4 <ux00boot_load_gpt_partition+0x1c4> */
+                 "jt3e1:\n"
+    /* 107d2: */ "li      s3,0\n"
+    /* 107d4: */ "lui     s2,0x10050\n"
+    /* 107d8: */ "j       11b\n" /* 1073a <ux00boot_load_gpt_partition+0x13a> */
+                 "jt3e2:\n"
+    /* 107da: */ "lui     s2,0x10050\n"
+    /* 107de: */ "j       13b\n" /* 10786 <ux00boot_load_gpt_partition+0x186> */
+                 "19:\n"
+    /* 107e0: */ "lui     s3,0x30000\n"
+    /* 107e4: */ "lui     s2,0x10041\n"
+    /* 107e8: */ "j       6b\n" /* 106b4 <ux00boot_load_gpt_partition+0xb4> */
+                 "jt1e1:\n"
+    /* 107ea: */ "li      a5,1\n"
+    /* 107ec: */ "j       10b\n" /* 10730 <ux00boot_load_gpt_partition+0x130> */
+                 "jt1e2:\n"
+    /* 107ee: */ "lui     s2,0x10041\n"
+    /* 107f2: */ "j       13b\n" /* 10786 <ux00boot_load_gpt_partition+0x186> */
+                 "20:\n"
+    /* 107f4: */ "li      s3,0\n"
+    /* 107f6: */ "lui     s2,0x10050\n"
+    /* 107fa: */ "j       6b\n" /* 106b4 <ux00boot_load_gpt_partition+0xb4> */
+                 "21:\n"
+    /* 107fc: */ "lui     s3,0x30000\n"
+    /* 10800: */ "lui     s2,0x10041\n"
+    /* 10804: */ "j       11b\n" /* 1073a <ux00boot_load_gpt_partition+0x13a> */
+                 "jt3e3:\n"
+    /* 10806: */ "lui     s2,0x10050\n"
+                 "22:\n"
+    /* 1080a: */ "lui     a4,0x5\n"
+    /* 1080c: */ "addiw   a5,a4,-481\n"
+    /* 10810: */ "addw    a1,a1,a5\n"
+    /* 10812: */ "addiw   a4,a4,-480\n"
+    /* 10816: */ "divuw   a5,a1,a4\n"
+    /* 1081a: */ "beqz    a5,23f\n" /* 1081e <ux00boot_load_gpt_partition+0x21e> */
+    /* 1081c: */ "addiw   a5,a5,-1\n"
+                 "23:\n"
+    /* 1081e: */ "sw      a5,0(s2) # 10050000 <_sp+0x7e70000>\n"
+    /* 10822: */ "lw      a5,96(s2)\n"
+    /* 10826: */ "li      a1,102\n"
+    /* 1082a: */ "mv      a0,s2\n"
+    /* 1082c: */ "andi    a5,a5,-2\n"
+    /* 1082e: */ "sw      a5,96(s2)\n"
+    /* 10832: */ "call    spi_txrx\n"
+    /* 1083a: */ "li      a1,153\n"
+    /* 1083e: */ "mv      a0,s2\n"
+    /* 10840: */ "call    spi_txrx\n"
+    /* 10848: */ "mv      a2,s1\n"
+    /* 1084a: */ "mv      a1,s0\n"
+    /* 1084c: */ "mv      a0,s2\n"
+    /* 1084e: */ "call    load_spiflash_gpt_partition\n"
+    /* 10852: */ "sext.w  a0,a0\n"
+    /* 10854: */ "j       9b\n" /* 1071e <ux00boot_load_gpt_partition+0x11e> */
+                 "jt1e3:\n"
+    /* 10856: */ "lui     s2,0x10041\n"
+    /* 1085a: */ "j       22b\n" /* 1080a <ux00boot_load_gpt_partition+0x20a> */
+                 "jt2e3:\n"
+    /* 1085c: */ "lui     s2,0x10040\n"
+    /* 10860: */ "j       22b\n" /* 1080a <ux00boot_load_gpt_partition+0x20a> */
+    ".section .rodata\n"
+    ".align 3\n"
+    "jt1:\n"
+        ".word (jt1e1 - jt1), (jt1e1 - jt1), (jt1e2 - jt1), (jt1e3 - jt1)\n"
+        ".word (jt1e1 - jt1), (jt1e2 - jt1), (jt1e3 - jt1), (jt1e1 - jt1)\n"
+        ".word (jt1e3 - jt1), (jt1e1 - jt1)\n"
+    "jt2:\n"
+        ".word (jt2e1 - jt2), (jt2e1 - jt2), (jt2e2 - jt2), (jt2e3 - jt2)\n"
+        ".word (jt2e1 - jt2), (jt2e2 - jt2), (jt2e3 - jt2), (jt2e1 - jt2)\n"
+        ".word (jt2e3 - jt2), (jt2e1 - jt2)\n"
+    "jt3:\n"
+        ".word (jt3e1 - jt3), (jt3e1 - jt3), (jt3e2 - jt3), (jt3e3 - jt3)\n"
+        ".word (jt3e1 - jt3), (jt3e2 - jt3), (jt3e3 - jt3), (jt3e1 - jt3)\n"
+        ".word (jt3e3 - jt3), (jt3e1 - jt3)\n"
+    "data4:\n"
+        ".word 5, 6, 7, 8, 9, 0\n"
+    ".section .text\n"
+  );
+  __builtin_unreachable();
+#endif
 }

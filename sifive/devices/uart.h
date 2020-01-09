@@ -31,8 +31,8 @@
 
 #ifndef __ASSEMBLER__
 
-/* compat function for debug output, implemented in main.c */
-int puts(const char *s);
+/* compat "function" for debug output */
+#define puts(s) 1 /* nop */
 
 #include <stdint.h>
 /**
