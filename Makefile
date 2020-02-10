@@ -79,7 +79,7 @@ zsbl/start.o: zsbl/ux00_zsbl.dtb
 	$(OBJDUMP) -S $^ > $@
 
 %.dtb: %.dts
-	dtc $^ -o $@ -O dtb
+	dtc -o $@ -O dtb $^
 
 %.o: %.S
 	$(CC) $(CFLAGS) $(CCASFLAGS) -c $< -o $@
