@@ -25,10 +25,9 @@ LIB_ZS2_O=\
 	lib/memcpy.o \
 	sd/sd.o \
 
-LIB_FS_O= \
-	fsbl/start.o \
-	fsbl/main.o \
-	$(LIB_ZS1_O) \
+LIB_FS1_O= \
+	fsbl/start.o
+LIB_FS2_O= $(LIB_ZS1_O) \
 	ememoryotp/ememoryotp.o \
 	fsbl/ux00boot.o \
 	clkutils/clkutils.o \
@@ -44,11 +43,11 @@ LIB_FS_O= \
 
 H=$(wildcard *.h */*.h)
 
-all: zsbl.bin fsbl.bin
+all: zsbl.bin fsbl.bin board_setup.bin
 
-elf: zsbl.elf fsbl.elf
+elf: zsbl.elf fsbl.elf board_setup.elf
 
-asm: zsbl.asm fsbl.asm
+asm: zsbl.asm fsbl.asm board_setup.asm
 
 lib/version.c: .git/HEAD .git/index
 	echo "const char *gitid = \"$(shell git describe --always --dirty)\";" > lib/version.c
@@ -65,7 +64,10 @@ zsbl.elf: zsbl/start.o zsbl/main.o $(LIB_ZS1_O) zsbl/ux00boot.o $(LIB_ZS2_O) ux0
 fsbl/ux00boot.o: ux00boot/ux00boot.c
 	$(CC) $(CFLAGS) -DUX00BOOT_BOOT_STAGE=1 -c -o $@ $^
 
-fsbl.elf: $(LIB_FS_O) ux00_fsbl.lds
+fsbl.elf: $(LIB_FS1_O) fsbl/main.o $(LIB_FS2_O) ux00_fsbl.lds
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(filter %.o,$^) -T$(filter %.lds,$^)
+
+board_setup.elf: $(LIB_FS1_O) $(LIB_FS2_O) ux00_fsbl.lds fsbl/main-board_setup.o
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(filter %.o,$^) -T$(filter %.lds,$^)
 
 fsbl/dtb.o: fsbl/ux00_fsbl.dtb
@@ -87,5 +89,8 @@ zsbl/start.o: zsbl/ux00_zsbl.dtb
 %.o: %.c $(H)
 	$(CC) $(CFLAGS) -o $@ -c $<
 
+%-board_setup.o: %.c $(H)
+	$(CC) -DBOARD_SETUP $(CFLAGS) -o $@ -c $<
+
 clean::
-	rm -f */*.o */*.dtb zsbl.bin zsbl.elf zsbl.asm fsbl.bin fsbl.elf fsbl.asm lib/version.c
+	rm -f */*.o */*.dtb {zsbl,fsbl,board_setup}.{bin,elf,asm} lib/version.c

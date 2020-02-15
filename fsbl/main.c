@@ -286,6 +286,9 @@ int main(int id, unsigned long dtb)
   // Procmon => core clock
   UX00PRCI_REG(UX00PRCI_PROCMONCFG) = 0x1 << 24;
 
+#ifdef BOARD_SETUP
+  asm volatile ("ebreak");
+#else
   // Copy the DTB and reduce the reported memory to match DDR
   dtb_target = ddr_end - 0x200000; // - 2MB
 #ifndef SKIP_DTB_DDR_RANGE
@@ -390,6 +393,7 @@ int main(int id, unsigned long dtb)
 
   puts("\r\n\n");
   slave_main(0, dtb);
+#endif
 
   //dead code 
   return 0;
@@ -403,6 +407,10 @@ int main(int id, unsigned long dtb)
 
 int slave_main(int id, unsigned long dtb)
 {
+#ifdef BOARD_SETUP
+  while (1)
+    ;
+#else
   // Wait for the DTB location to become known
   while (!dtb_target) {}
 
@@ -419,6 +427,7 @@ int slave_main(int id, unsigned long dtb)
   Barrier_Wait(&barrier, NUM_CORES);
   ccache_enable_ways(CCACHE_CTRL_ADDR,14);
   asm volatile ("unimp" : : "r"(a0), "r"(a1));
+#endif
 
   return 0;
 }
