@@ -39,15 +39,18 @@ LIB_FS2_O= $(LIB_ZS1_O) \
 	lib/strcmp.o \
 	lib/strlen.o \
 	fsbl/dtb.o \
-	
 
 H=$(wildcard *.h */*.h)
 
-all: zsbl.bin fsbl.bin board_setup.bin
+BIN=zsbl.bin fsbl.bin board_setup.bin
+ELF=zsbl.elf fsbl.elf board_setup.elf
+ASM=zsbl.asm fsbl.asm board_setup.asm
 
-elf: zsbl.elf fsbl.elf board_setup.elf
+all: $(BIN)
 
-asm: zsbl.asm fsbl.asm board_setup.asm
+elf: $(ELF)
+
+asm: $(ASM)
 
 lib/version.c: .git/HEAD .git/index
 	echo "const char *gitid = \"$(shell git describe --always --dirty)\";" > lib/version.c
@@ -93,4 +96,4 @@ zsbl/start.o: zsbl/ux00_zsbl.dtb
 	$(CC) -DBOARD_SETUP $(CFLAGS) -o $@ -c $<
 
 clean::
-	rm -f */*.o */*.dtb {zsbl,fsbl,board_setup}.{bin,elf,asm} lib/version.c
+	rm -f */*.o */*.dtb $(BIN) $(ELF) $(ASM) lib/version.c
