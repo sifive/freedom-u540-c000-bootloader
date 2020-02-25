@@ -17,6 +17,14 @@
 #include <string.h>
 #include <stdint.h>
 
+static __inline unsigned long detect_null(unsigned long w)
+{
+  unsigned long mask = 0x7f7f7f7f;
+  if (sizeof (long) == 8)
+    mask = ((mask << 16) << 16) | mask;
+  return ~(((w & mask) + mask) | w | mask);
+}
+
 size_t strlen(const char *str)
 {
   const char *start = str;
@@ -35,7 +43,7 @@ size_t strlen(const char *str)
     } while ((uintptr_t)str & (sizeof (long) - 1));
 
   unsigned long *ls = (unsigned long *)str;
-  while (!__libc_detect_null (*ls++))
+  while (!detect_null (*ls++))
     ;
   asm volatile ("" : "+r"(ls)); /* prevent "optimization" */
 

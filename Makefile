@@ -8,7 +8,7 @@ CC=${CROSSCOMPILE}gcc
 LD=${CROSSCOMPILE}ld
 OBJCOPY=${CROSSCOMPILE}objcopy
 OBJDUMP=${CROSSCOMPILE}objdump
-CFLAGS=-I. -O2 -ggdb -march=rv64imafdc -mabi=lp64d -Wall -mcmodel=medany -mexplicit-relocs
+CFLAGS=-I. -O2 -ggdb -march=rv64imafdc -mabi=lp64d -Wall -mcmodel=medany -mexplicit-relocs -Wno-main
 CCASFLAGS=-I. -mcmodel=medany -mexplicit-relocs
 LDFLAGS=-nostdlib -nostartfiles
 
@@ -54,7 +54,7 @@ asm: $(ASM)
 
 lib/version.c: .git/HEAD .git/index
 	echo "const char *gitid = \"$(shell git describe --always --dirty)\";" > lib/version.c
-	echo "const char *gitdate = \"$(shell git log -n 1 --date=short --format=format:"%ad.%h" HEAD)\";" >> lib/version.c
+	echo "const char *gitdate = \"$(shell git log -n 1 --date=short --format=format:"%ad.%h" --no-show-signatures HEAD)\";" >> lib/version.c
 	echo "const char *gitversion = \"$(shell git rev-parse HEAD)\";" >> lib/version.c
 #	echo "const char *gitstatus = \"$(shell git status -s )\";" >> lib/version.c
 
