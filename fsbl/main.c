@@ -5,13 +5,11 @@
 
 #include "encoding.h"
 #include <stdint.h>
-#include <stdlib.h>
 #include <string.h>
 #include <stdatomic.h>
 #include "fdt/fdt.h"
 #include <ememoryotp/ememoryotp.h>
 #include <uart/uart.h>
-#include <stdio.h>
 
 #include "regconfig-ctl.h"
 #include "regconfig-phy.h"
