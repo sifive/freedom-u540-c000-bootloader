@@ -53,7 +53,7 @@ Barrier barrier = { {0, 0}, {0, 0}, 0}; // bss initialization is done by main co
 
 extern const gpt_guid gpt_guid_sifive_bare_metal;
 volatile uint64_t dtb_target;
-unsigned int serial_to_burn = ~0;
+unsigned int serial_to_burn = ~0U;
 
 uint32_t __attribute__((weak)) own_dtb = 42; // not 0xedfe0dd0 the DTB magic
 
@@ -335,7 +335,7 @@ int main(int id, unsigned long dtb)
 #define FIRST_SLOT	0xfe
 #define LAST_SLOT	0x80
 
-  unsigned int serial = ~0;
+  unsigned int serial = ~0U;
   int serial_slot;
   ememory_otp_power_up_sequence();
   ememory_otp_begin_read();
@@ -344,7 +344,7 @@ int main(int id, unsigned long dtb)
     unsigned int neg = ememory_otp_read(serial_slot+1);
     serial = pos;
     if (pos == ~neg) break; // legal serial #
-    if (pos == ~0 && neg == ~0) break; // empty slot encountered
+    if (pos == ~0U && neg == ~0U) break; // empty slot encountered
   }
   ememory_otp_exit_read();
 
@@ -353,12 +353,12 @@ int main(int id, unsigned long dtb)
   uart_put_hex(uart, serial);
 
   // Program the OTP?
-  if (serial_to_burn != ~0 && serial != serial_to_burn && serial_slot > LAST_SLOT) {
+  if (serial_to_burn != ~0U && serial != serial_to_burn && serial_slot > LAST_SLOT) {
     uart_puts(uart, "Programming serial: ");
     uart_put_hex(uart, serial_to_burn);
     uart_puts(uart, "\r\n");
     ememory_otp_pgm_entry();
-    if (serial != ~0) {
+    if (serial != ~0U) {
       // erase the current serial
       uart_puts(uart, "Erasing prior serial\r\n");
       ememory_otp_pgm_access(serial_slot,   0);
@@ -376,7 +376,7 @@ int main(int id, unsigned long dtb)
 
   // SiFive MA-S MAC block; default to serial 0
   unsigned char mac[6] = { 0x70, 0xb3, 0xd5, 0x92, 0xf0, 0x00 };
-  if (serial != ~0) {
+  if (serial != ~0U) {
     mac[5] |= (serial >>  0) & 0xff;
     mac[4] |= (serial >>  8) & 0xff;
     mac[3] |= (serial >> 16) & 0xff;
