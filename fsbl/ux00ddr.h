@@ -11,7 +11,6 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
-#include <unistd.h>
 #include <uart/uart.h>
 #include <sifive/platform.h>
 

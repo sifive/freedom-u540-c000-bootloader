@@ -237,17 +237,20 @@ int sd_copy(spi_ctrl* spi, void* dst, uint32_t src_lba, size_t size)
   long i = size;
   int rc = 0;
 
-  uint8_t crc = 0;
-  crc = crc7(crc, SD_CMD(SD_CMD_READ_BLOCK_MULTIPLE));
-  crc = crc7(crc, src_lba >> 24);
-  crc = crc7(crc, (src_lba >> 16) & 0xff);
-  crc = crc7(crc, (src_lba >> 8) & 0xff);
-  crc = crc7(crc, src_lba & 0xff);
-  crc = (crc << 1) | 1;
-  if (sd_cmd(spi, SD_CMD(SD_CMD_READ_BLOCK_MULTIPLE), src_lba, crc) != 0x00) {
-    sd_cmd_end(spi);
-    return SD_COPY_ERROR_CMD18;
+  {
+    uint8_t crc = 0;
+    crc = crc7(crc, SD_CMD(SD_CMD_READ_BLOCK_MULTIPLE));
+    crc = crc7(crc, src_lba >> 24);
+    crc = crc7(crc, (src_lba >> 16) & 0xff);
+    crc = crc7(crc, (src_lba >> 8) & 0xff);
+    crc = crc7(crc, src_lba & 0xff);
+    crc = (crc << 1) | 1;
+    if (sd_cmd(spi, SD_CMD(SD_CMD_READ_BLOCK_MULTIPLE), src_lba, crc) != 0x00) {
+      sd_cmd_end(spi);
+      return SD_COPY_ERROR_CMD18;
+    }
   }
+
   do {
     uint16_t crc, crc_exp;
     long n;
