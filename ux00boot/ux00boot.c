@@ -12,6 +12,7 @@
 #include <spi/spi.h>
 #include <uart/uart.h>
 #include <gpt/gpt.h>
+#include <mbr/mbr.h>
 #include <sd/sd.h>
 #include "ux00boot.h"
 
@@ -470,6 +471,89 @@ static int load_spiflash_gpt_partition(spi_ctrl* spictrl, void* dst, const gpt_g
   return 0;
 }
 
+/**
+ * Load MBR partition from SD card.
+ */
+static int load_sd_mbr_partition(spi_ctrl* spictrl, void* dst)
+{
+  uint8_t mbr_buf[MBR_SECTOR_SZ];
+  int error;
+  error = sd_copy(spictrl, mbr_buf, MBR_HEADER_LBA, 1);
+  if (error) return decode_sd_copy_error(error);
+  
+  mbr_partition_range part_range = mbr_find_partition_boot(mbr_buf);
+  
+  if (!mbr_is_valid_partition_range(part_range)) {
+    return ERROR_CODE_GPT_PARTITION_NOT_FOUND;
+  }
+  
+  if (part_range.total_sz > MBR_IMAGE_MAX_SZ) {
+    part_range.total_sz = MBR_IMAGE_MAX_SZ;
+  }
+  
+  error = sd_copy(
+    spictrl,
+    dst,
+    part_range.first_lba,
+    part_range.total_sz / MBR_SECTOR_SZ
+  );
+  if (error) return decode_sd_copy_error(error);
+  return 0;
+}
+
+/**
+ * Load MBR partition from memory-mapped MBR image.
+ */
+static int load_mmap_mbr_partition(const void* gpt_base, void* payload_dest)
+{
+  uint8_t* mbr_buf = (uint8_t*)gpt_base;
+  mbr_partition_range part_range = mbr_find_partition_boot(mbr_buf);
+  
+  if (!mbr_is_valid_partition_range(part_range)) {
+    return ERROR_CODE_GPT_PARTITION_NOT_FOUND;
+  }
+  
+  if (part_range.total_sz > MBR_IMAGE_MAX_SZ) {
+    part_range.total_sz = MBR_IMAGE_MAX_SZ;
+  }
+  
+  memcpy(
+    payload_dest,
+    (void*) ((uintptr_t) gpt_base + part_range.first_lba * MBR_SECTOR_SZ),
+    part_range.total_sz
+  );
+  return 0;
+}
+
+/**
+ * Load MBR partition from SPI flash.
+ */
+static int load_spiflash_mbr_partition(spi_ctrl* spictrl, void* dst)
+{
+  uint8_t mbr_buf[MBR_SECTOR_SZ];
+  int error;
+  error = spi_copy(spictrl, mbr_buf, MBR_HEADER_LBA, MBR_SECTOR_SZ);
+  if (error) return ERROR_CODE_SPI_COPY_FAILED;
+  
+  mbr_partition_range part_range = mbr_find_partition_boot(mbr_buf);
+  
+  if (!mbr_is_valid_partition_range(part_range)) {
+    return ERROR_CODE_GPT_PARTITION_NOT_FOUND;
+  }
+  
+  if (part_range.total_sz > MBR_IMAGE_MAX_SZ) {
+    part_range.total_sz = MBR_IMAGE_MAX_SZ;
+  }
+  
+  error = spi_copy(
+    spictrl,
+    dst,
+    part_range.first_lba * MBR_SECTOR_SZ,
+    part_range.total_sz
+  );
+  if (error) return ERROR_CODE_SPI_COPY_FAILED;
+  return 0;
+}
 
 void ux00boot_fail(long code, int trap)
 {
@@ -515,12 +599,12 @@ void ux00boot_fail(long code, int trap)
 //==============================================================================
 
 /**
- * Load GPT partition match specified partition type into specified memory.
+ * Load GPT or MBR partition match specified partition type into specified memory.
  *
  * Read from mode select device to determine which bulk storage medium to read
  * GPT image from, and properly initialize the bulk storage based on type.
  */
-void ux00boot_load_gpt_partition(void* dst, const gpt_guid* partition_type_guid, unsigned int peripheral_input_khz)
+void ux00boot_load_gpt_or_mbr_partition(void* dst, const gpt_guid* partition_type_guid, unsigned int peripheral_input_khz)
 {
   uint32_t mode_select = *((volatile uint32_t*) MODESELECT_MEM_ADDR);
 
@@ -557,22 +641,34 @@ void ux00boot_load_gpt_partition(void* dst, const gpt_guid* partition_type_guid,
   {
     case UX00BOOT_ROUTINE_FLASH:
       error = initialize_spi_flash_direct(spictrl, peripheral_input_khz);
-      if (!error) error = load_spiflash_gpt_partition(spictrl, dst, partition_type_guid);
+      if (!error) {
+        error = load_spiflash_gpt_partition(spictrl, dst, partition_type_guid);
+        if (error) error = load_spiflash_mbr_partition(spictrl, dst);
+      }
       break;
     case UX00BOOT_ROUTINE_MMAP:
       error = initialize_spi_flash_mmap_single(spictrl, peripheral_input_khz);
-      if (!error) error = load_mmap_gpt_partition(spimem, dst, partition_type_guid);
+      if (!error) {
+        error = load_mmap_gpt_partition(spimem, dst, partition_type_guid);
+        if (error) error = load_mmap_mbr_partition(spimem, dst);
+      }
       break;
     case UX00BOOT_ROUTINE_MMAP_QUAD:
       error = initialize_spi_flash_mmap_quad(spictrl, peripheral_input_khz);
-      if (!error) error = load_mmap_gpt_partition(spimem, dst, partition_type_guid);
+      if (!error) {
+        error = load_mmap_gpt_partition(spimem, dst, partition_type_guid);
+        if (error) error = load_mmap_mbr_partition(spimem, dst);
+      }
       break;
     case UX00BOOT_ROUTINE_SDCARD:
     case UX00BOOT_ROUTINE_SDCARD_NO_INIT:
       {
         int skip_sd_init_commands = (boot_routine == UX00BOOT_ROUTINE_SDCARD) ? 0 : 1;
         error = initialize_sd(spictrl, peripheral_input_khz, skip_sd_init_commands);
-        if (!error) error = load_sd_gpt_partition(spictrl, dst, partition_type_guid);
+        if (!error) {
+          error = load_sd_gpt_partition(spictrl, dst, partition_type_guid);
+          if (error) error = load_sd_mbr_partition(spictrl, dst);
+        }
       }
       break;
     case UX00BOOT_ROUTINE_LOOP:

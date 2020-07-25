@@ -389,7 +389,7 @@ int main(int id, unsigned long dtb)
 #endif
 
   puts("Loading boot payload");
-  ux00boot_load_gpt_partition((void*) PAYLOAD_DEST, &gpt_guid_sifive_bare_metal, peripheral_input_khz);
+  ux00boot_load_gpt_or_mbr_partition((void*) PAYLOAD_DEST, &gpt_guid_sifive_bare_metal, peripheral_input_khz);
 
   puts("\r\n\n");
   slave_main(0, dtb);
