@@ -34,7 +34,7 @@
 			i-cache-block-size = <64>;
 			i-cache-sets = <128>;
 			i-cache-size = <16384>;
-			next-level-cache = <&L24 &L0>;
+			next-level-cache = <&L0>;
 			reg = <0>;
 			riscv,isa = "rv64imac";
 			sifive,dtim = <&L8>;
@@ -61,7 +61,7 @@
 			i-tlb-sets = <1>;
 			i-tlb-size = <32>;
 			mmu-type = "riscv,sv39";
-			next-level-cache = <&L24 &L0>;
+			next-level-cache = <&L0>;
 			reg = <1>;
 			riscv,isa = "rv64imafdc";
 			sifive,itim = <&L11>;
@@ -88,7 +88,7 @@
 			i-tlb-sets = <1>;
 			i-tlb-size = <32>;
 			mmu-type = "riscv,sv39";
-			next-level-cache = <&L24 &L0>;
+			next-level-cache = <&L0>;
 			reg = <2>;
 			riscv,isa = "rv64imafdc";
 			sifive,itim = <&L14>;
@@ -115,7 +115,7 @@
 			i-tlb-sets = <1>;
 			i-tlb-size = <32>;
 			mmu-type = "riscv,sv39";
-			next-level-cache = <&L24 &L0>;
+			next-level-cache = <&L0>;
 			reg = <3>;
 			riscv,isa = "rv64imafdc";
 			sifive,itim = <&L17>;
@@ -142,7 +142,7 @@
 			i-tlb-sets = <1>;
 			i-tlb-size = <32>;
 			mmu-type = "riscv,sv39";
-			next-level-cache = <&L24 &L0>;
+			next-level-cache = <&L0>;
 			reg = <4>;
 			riscv,isa = "rv64imafdc";
 			sifive,itim = <&L20>;
@@ -154,6 +154,19 @@
 				interrupt-controller;
 			};
 		};
+		L0: cache-controller@2010000 {
+				cache-block-size = <64>;
+				cache-level = <2>;
+				cache-sets = <2048>;
+				cache-size = <2097152>;
+				cache-unified;
+				compatible = "sifive,ccache0", "cache";
+				interrupt-parent = <&L4>;
+				interrupts = <1 2 3>;
+				reg = <0x0 0x2010000 0x0 0x1000 0x0 0x8000000 0x0 0x2000000>;
+				reg-names = "control", "sideband";
+		};
+
 	};
 	L36: memory@80000000 {
 		device_type = "memory";
@@ -194,19 +207,6 @@
 			compatible = "sifive,bus-blocker0";
 			reg = <0x0 0x100b8000 0x0 0x1000>;
 			reg-names = "control";
-		};
-		L0: cache-controller@2010000 {
-			cache-block-size = <64>;
-			cache-level = <2>;
-			cache-sets = <2048>;
-			cache-size = <2097152>;
-			cache-unified;
-			compatible = "sifive,ccache0", "cache";
-			interrupt-parent = <&L4>;
-			interrupts = <1 2 3>;
-			next-level-cache = <&L25 &L40 &L36>;
-			reg = <0x0 0x2010000 0x0 0x1000 0x0 0x8000000 0x0 0x2000000>;
-			reg-names = "control", "sideband";
 		};
 		L33: cadence-ddr-mgmt@100c0000 {
 			compatible = "sifive,cadenceddrmgmt0";
@@ -356,7 +356,7 @@
 		};
 		L4: interrupt-controller@c000000 {
 			#interrupt-cells = <1>;
-			compatible = "riscv,plic0";
+			compatible = "sifive,plic-1.0.0", "sifive,fu540-c000-plic", "riscv,plic0";
 			interrupt-controller;
 			interrupts-extended = <&L10 11 &L13 11 &L13 9 &L16 11 &L16 9 &L19 11 &L19 9 &L22 11 &L22 9>;
 			reg = <0x0 0xc000000 0x0 0x4000000>;
